@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>blob on safari can not play</title>
+    <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.9.6/dist/shaka-player.compiled.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.9.6/dist/shaka-player.compiled.min.js"></script>
+    <script src="./manifest.js"></script>
+  </head>
+  <body>
+    <video
+      id="video"
+      width="640"
+      poster="//shaka-player-demo.appspot.com/assets/poster.jpg"
+      controls
+      autoplay
+    ></video>
+
+    <script>
+      const manifestUri = URL.createObjectURL(
+        new Blob([window.manifestText], {
+          type: "application/x-mpegurl",
+        })
+      );
+      console.log("manifestUri: ", manifestUri);
+      // const manifestUri =
+      //   "https://storage.googleapis.com/shaka-demo-assets/bbb-dark-truths-hls/playlist_v-0144p-0100k-libx264.mp4.m3u8";
+
+      function initApp() {
+        // Install built-in polyfills to patch browser incompatibilities.
+        shaka.polyfill.installAll();
+
+        // Check to see if the browser supports the basic APIs Shaka needs.
+        if (shaka.Player.isBrowserSupported()) {
+          // Everything looks good!
+          initPlayer();
+        } else {
+          // This browser does not have the minimum set of APIs we need.
+          console.error("Browser not supported!");
+        }
+      }
+
+      async function initPlayer() {
+        // Create a Player instance.
+        const video = document.getElementById("video");
+        const player = new shaka.Player();
+        await player.attach(video);
+
+        // Attach player to the window to make it easy to access in the JS console.
+        window.player = player;
+
+        // Listen for error events.
+        player.addEventListener("error", onErrorEvent);
+
+        // Try to load a manifest.
+        // This is an asynchronous process.
+        try {
+          await player.load(manifestUri, 0, "application/x-mpegurl");
+          // This runs if the asynchronous load is successful.
+          console.log("The video has now been loaded!");
+        } catch (e) {
+          // onError is executed if the asynchronous load fails.
+          onError(e);
+        }
+      }
+
+      function onErrorEvent(event) {
+        // Extract the shaka.util.Error object from the event.
+        onError(event.detail);
+      }
+
+      function onError(error) {
+        // Log the error.
+        console.error("Error code", error.code, "object", error);
+      }
+
+      document.addEventListener("DOMContentLoaded", initApp);
+    </script>
+  </body>
+</html>
